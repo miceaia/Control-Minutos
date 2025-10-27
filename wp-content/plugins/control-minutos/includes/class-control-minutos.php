@@ -10,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once CONTROL_MINUTOS_PLUGIN_DIR . 'includes/class-control-minutos-activator.php';
+require_once CONTROL_MINUTOS_PLUGIN_DIR . 'includes/class-control-minutos-integrations.php';
 require_once CONTROL_MINUTOS_PLUGIN_DIR . 'includes/class-control-minutos-rest.php';
 require_once CONTROL_MINUTOS_PLUGIN_DIR . 'includes/class-control-minutos-admin.php';
 require_once CONTROL_MINUTOS_PLUGIN_DIR . 'includes/class-control-minutos-frontend.php';
@@ -28,6 +29,13 @@ class Control_Minutos {
      * @var Control_Minutos_REST
      */
     protected $rest_controller;
+
+    /**
+     * Integrations helper instance.
+     *
+     * @var Control_Minutos_Integrations
+     */
+    protected $integrations;
 
     /**
      * Admin UI instance.
@@ -78,9 +86,10 @@ class Control_Minutos {
      * Init plugin components.
      */
     public function init() {
-        $this->rest_controller = new Control_Minutos_REST();
-        $this->admin           = new Control_Minutos_Admin();
-        $this->frontend        = new Control_Minutos_Frontend( $this->rest_controller );
+        $this->integrations    = new Control_Minutos_Integrations();
+        $this->rest_controller = new Control_Minutos_REST( $this->integrations );
+        $this->admin           = new Control_Minutos_Admin( $this->integrations );
+        $this->frontend        = new Control_Minutos_Frontend( $this->rest_controller, $this->integrations );
 
         $this->rest_controller->hooks();
         $this->admin->hooks();

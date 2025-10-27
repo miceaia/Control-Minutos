@@ -13,6 +13,22 @@ class Control_Minutos_REST {
     const REST_NAMESPACE = 'control-minutos/v1';
 
     /**
+     * Integrations helper.
+     *
+     * @var Control_Minutos_Integrations|null
+     */
+    protected $integrations;
+
+    /**
+     * Constructor.
+     *
+     * @param Control_Minutos_Integrations|null $integrations Integrations helper.
+     */
+    public function __construct( $integrations = null ) {
+        $this->integrations = $integrations;
+    }
+
+    /**
      * Register hooks.
      */
     public function hooks() {
@@ -74,8 +90,38 @@ class Control_Minutos_REST {
         $course_id       = absint( $request->get_param( 'course_id' ) );
         $lesson_id       = absint( $request->get_param( 'lesson_id' ) );
 
-        if ( empty( $video_id ) || empty( $total_seconds ) ) {
+        if ( $this->integrations && ( ! $course_id || ! $lesson_id ) ) {
+            $resolved = $this->integrations->resolve_context_from_video( $video_id );
+
+            if ( ! $course_id && ! empty( $resolved['course_id'] ) ) {
+                $course_id = (int) $resolved['course_id'];
+            }
+
+            if ( ! $lesson_id && ! empty( $resolved['lesson_id'] ) ) {
+                $lesson_id = (int) $resolved['lesson_id'];
+            }
+        }
+
+        if ( empty( $video_id ) ) {
             return new WP_REST_Response( array( 'message' => __( 'Datos incompletos.', 'control-minutos' ) ), 400 );
+        }
+
+        if ( $this->integrations && empty( $total_seconds ) ) {
+            $resolved_total = $this->integrations->get_avppro_duration( $video_id );
+
+            if ( $resolved_total ) {
+                $total_seconds = $resolved_total;
+            }
+        }
+
+        if ( empty( $total_seconds ) ) {
+            return new WP_REST_Response(
+                array(
+                    'success' => false,
+                    'message' => __( 'Duración desconocida del video.', 'control-minutos' ),
+                ),
+                200
+            );
         }
 
         global $wpdb;
@@ -143,12 +189,15 @@ class Control_Minutos_REST {
         if ( ! $row ) {
             return new WP_REST_Response(
                 array(
-                    'seconds_watched' => 0,
-                    'total_seconds'   => 0,
+                    'seconds_watched'   => 0,
+                    'total_seconds'     => 0,
+                    'remaining_seconds' => 0,
                 ),
                 200
             );
         }
+
+        $row['remaining_seconds'] = max( 0, (int) $row['total_seconds'] - (int) $row['seconds_watched'] );
 
         return new WP_REST_Response( $row, 200 );
     }

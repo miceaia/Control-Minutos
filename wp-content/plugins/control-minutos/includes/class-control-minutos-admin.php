@@ -11,6 +11,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Control_Minutos_Admin {
     /**
+     * Integrations helper.
+     *
+     * @var Control_Minutos_Integrations
+     */
+    protected $integrations;
+
+    /**
+     * Constructor.
+     *
+     * @param Control_Minutos_Integrations $integrations Integrations helper.
+     */
+    public function __construct( Control_Minutos_Integrations $integrations ) {
+        $this->integrations = $integrations;
+    }
+
+    /**
      * Register hooks.
      */
     public function hooks() {
@@ -57,8 +73,17 @@ class Control_Minutos_Admin {
             'control-minutos-admin',
             'controlMinutosAdmin',
             array(
-                'nonce'    => wp_create_nonce( 'wp_rest' ),
-                'endpoint' => rest_url( Control_Minutos_REST::REST_NAMESPACE . '/progress' ),
+                'nonce'        => wp_create_nonce( 'wp_rest' ),
+                'endpoint'     => rest_url( Control_Minutos_REST::REST_NAMESPACE . '/progress' ),
+                'strings'      => array(
+                    'detailsTitle' => __( 'Detalle de visualización', 'control-minutos' ),
+                    'minutesShort' => __( 'min', 'control-minutos' ),
+                    'remaining'    => __( 'Restan', 'control-minutos' ),
+                    'consumed'     => __( 'Consumido', 'control-minutos' ),
+                    'detailsButton' => __( 'Detalles', 'control-minutos' ),
+                ),
+                'courseOptions' => $this->integrations->get_learndash_courses(),
+                'lessonOptions' => $this->prepare_lessons_for_localize(),
             )
         );
     }
@@ -71,9 +96,31 @@ class Control_Minutos_Admin {
             wp_die( esc_html__( 'No tienes permisos para acceder.', 'control-minutos' ) );
         }
 
-        $users   = get_users( array( 'fields' => array( 'ID', 'display_name' ) ) );
-        $courses = apply_filters( 'control_minutos_courses', array() );
-        $lessons = apply_filters( 'control_minutos_lessons', array() );
+        $users = get_users( array( 'fields' => array( 'ID', 'display_name' ) ) );
+
+        $courses = $this->integrations->get_learndash_courses();
+        $manual_courses = apply_filters( 'control_minutos_courses', array() );
+
+        if ( is_array( $manual_courses ) && ! empty( $manual_courses ) ) {
+            $courses = $manual_courses + $courses;
+        }
+
+        $lessons_map   = $this->integrations->get_learndash_lessons();
+        $manual_lessons = apply_filters( 'control_minutos_lessons', array() );
+
+        if ( is_array( $manual_lessons ) && ! empty( $manual_lessons ) ) {
+            foreach ( $manual_lessons as $lesson_id => $lesson_name ) {
+                $lessons_map[ $lesson_id ] = array(
+                    'title'     => $lesson_name,
+                    'course_id' => isset( $lessons_map[ $lesson_id ]['course_id'] ) ? $lessons_map[ $lesson_id ]['course_id'] : 0,
+                );
+            }
+        }
+
+        $lessons = array();
+        foreach ( $lessons_map as $lesson_id => $data ) {
+            $lessons[ $lesson_id ] = $data['title'];
+        }
 
         global $wpdb;
         $table = $wpdb->prefix . 'control_minutos_logs';
@@ -87,5 +134,33 @@ class Control_Minutos_Admin {
         );
 
         include CONTROL_MINUTOS_PLUGIN_DIR . 'views/admin-report.php';
+    }
+
+    /**
+     * Prepare lesson data for localization.
+     *
+     * @return array<int,array{title:string,course_id:int}>
+     */
+    protected function prepare_lessons_for_localize() {
+        $lessons = $this->integrations->get_learndash_lessons();
+        $manual  = apply_filters( 'control_minutos_lessons', array() );
+
+        if ( is_array( $manual ) && ! empty( $manual ) ) {
+            foreach ( $manual as $lesson_id => $lesson_name ) {
+                $lessons[ $lesson_id ] = array(
+                    'title'     => $lesson_name,
+                    'course_id' => isset( $lessons[ $lesson_id ]['course_id'] ) ? (int) $lessons[ $lesson_id ]['course_id'] : 0,
+                );
+            }
+        }
+
+        foreach ( $lessons as $lesson_id => $data ) {
+            $lessons[ $lesson_id ] = array(
+                'title'     => $data['title'],
+                'course_id' => isset( $data['course_id'] ) ? (int) $data['course_id'] : 0,
+            );
+        }
+
+        return $lessons;
     }
 }

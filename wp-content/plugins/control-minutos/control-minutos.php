@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Control de Minutos
  * Description: Controla los minutos consumidos en Advanced Video Player Pro y muestra reportes por usuario y lección.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Control-Minutos Team
  * Text Domain: control-minutos
  * Domain Path: /languages
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'CONTROL_MINUTOS_VERSION' ) ) {
-    define( 'CONTROL_MINUTOS_VERSION', '1.0.0' );
+    define( 'CONTROL_MINUTOS_VERSION', '1.1.0' );
 }
 
 if ( ! defined( 'CONTROL_MINUTOS_PLUGIN_FILE' ) ) {

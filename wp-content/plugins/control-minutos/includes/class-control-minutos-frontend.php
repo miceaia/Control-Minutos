@@ -18,6 +18,13 @@ class Control_Minutos_Frontend {
     protected $rest_controller;
 
     /**
+     * Integrations helper.
+     *
+     * @var Control_Minutos_Integrations
+     */
+    protected $integrations;
+
+    /**
      * CSS selector filter for Advanced Video Player Pro videos.
      *
      * @var string
@@ -27,11 +34,14 @@ class Control_Minutos_Frontend {
     /**
      * Constructor.
      *
-     * @param Control_Minutos_REST $rest_controller REST controller.
+     * @param Control_Minutos_REST        $rest_controller REST controller.
+     * @param Control_Minutos_Integrations $integrations   Integrations helper.
      */
-    public function __construct( Control_Minutos_REST $rest_controller ) {
+    public function __construct( Control_Minutos_REST $rest_controller, Control_Minutos_Integrations $integrations ) {
         $this->rest_controller = $rest_controller;
-        $this->selector        = apply_filters( 'control_minutos_video_selector', '.avppro-player video' );
+        $this->integrations    = $integrations;
+        $default_selector      = '.avppro-player video, .miceaia-video-player video, [data-avppro-player] video';
+        $this->selector        = apply_filters( 'control_minutos_video_selector', $default_selector );
     }
 
     /**
@@ -47,16 +57,27 @@ class Control_Minutos_Frontend {
     public function enqueue_assets() {
         wp_enqueue_style( 'control-minutos-frontend', plugins_url( 'assets/css/frontend.css', CONTROL_MINUTOS_PLUGIN_FILE ), array(), CONTROL_MINUTOS_VERSION );
         wp_enqueue_script( 'control-minutos-frontend', plugins_url( 'assets/js/frontend.js', CONTROL_MINUTOS_PLUGIN_FILE ), array( 'jquery' ), CONTROL_MINUTOS_VERSION, true );
+
+        $context = $this->integrations->get_current_learndash_context();
+
         wp_localize_script(
             'control-minutos-frontend',
             'controlMinutosFrontend',
             array(
-                'selector' => $this->selector,
-                'nonce'    => wp_create_nonce( 'wp_rest' ),
-                'endpoint' => rest_url( Control_Minutos_REST::REST_NAMESPACE . '/progress' ),
-                'strings'  => array(
-                    'consumed' => __( 'Consumido', 'control-minutos' ),
-                    'unit'     => __( 'min', 'control-minutos' ),
+                'selector'      => $this->selector,
+                'nonce'         => wp_create_nonce( 'wp_rest' ),
+                'endpoint'      => rest_url( Control_Minutos_REST::REST_NAMESPACE . '/progress' ),
+                'context'       => array(
+                    'courseId' => $context['course_id'],
+                    'lessonId' => $context['lesson_id'],
+                ),
+                'integrations'  => array(
+                    'learndashActive' => $this->integrations->is_learndash_active(),
+                ),
+                'strings'       => array(
+                    'consumed'  => __( 'Consumido', 'control-minutos' ),
+                    'unit'      => __( 'min', 'control-minutos' ),
+                    'remaining' => __( 'Restan', 'control-minutos' ),
                 ),
             )
         );

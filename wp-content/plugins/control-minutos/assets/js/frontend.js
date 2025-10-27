@@ -14,7 +14,8 @@
             return '0';
         }
         const minutes = seconds / 60;
-        return Number.isInteger(minutes) ? minutes.toString() : (Math.round(minutes * 10) / 10).toString();
+        const rounded = Math.round(minutes * 10) / 10;
+        return Number.isInteger(rounded) ? rounded.toString() : rounded.toFixed(1);
     }
 
     function ensureCounter($video, totalSeconds) {
@@ -31,8 +32,10 @@
     function updateCounter($counter, watchedSeconds) {
         const total = parseInt($counter.data('total'), 10) || 0;
         const unit = settings.strings?.unit || 'min';
-        const text = `${settings.strings?.consumed || 'Consumido'} ${formatMinutes(watchedSeconds)} / ${formatMinutes(total)} ${unit}`;
-        $counter.text(text);
+        const consumedText = `${settings.strings?.consumed || 'Consumido'} ${formatMinutes(watchedSeconds)} / ${formatMinutes(total)} ${unit}`;
+        const remainingSeconds = Math.max(total - watchedSeconds, 0);
+        const remainingText = `${settings.strings?.remaining || 'Restan'} ${formatMinutes(remainingSeconds)} ${unit}`;
+        $counter.html(`<span class="cm-counter-consumed">${consumedText}</span><span class="cm-counter-remaining">${remainingText}</span>`);
     }
 
     function sendProgress(videoElement, watchedSeconds, totalSeconds) {
@@ -47,12 +50,13 @@
             return;
         }
 
+        const context = settings.context || {};
         const payload = {
             video_id: videoElement.dataset.videoId || videoElement.id || videoElement.currentSrc,
             seconds_watched: safeWatched,
             total_seconds: safeTotal,
-            course_id: videoElement.dataset.courseId || '',
-            lesson_id: videoElement.dataset.lessonId || ''
+            course_id: videoElement.dataset.courseId || context.courseId || '',
+            lesson_id: videoElement.dataset.lessonId || context.lessonId || ''
         };
 
         if (!payload.video_id) {
@@ -118,8 +122,10 @@
                     }
                     const watchedSeconds = parseInt(data.seconds_watched, 10) || 0;
                     const total = parseInt(data.total_seconds, 10) || totalSeconds;
+                    const remaining = typeof data.remaining_seconds !== 'undefined' ? parseInt(data.remaining_seconds, 10) : Math.max(total - watchedSeconds, 0);
                     $counter.data('total', total);
                     updateCounter($counter, watchedSeconds);
+                    $counter.data('remaining', remaining);
                     if (watchedSeconds) {
                         video.currentTime = watchedSeconds;
                     }

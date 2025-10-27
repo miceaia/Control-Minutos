@@ -5,31 +5,30 @@ Este repositorio contiene un plugin de WordPress que extiende **Advanced Video P
 ## Características
 
 - Registro automático de tiempo de reproducción por usuario y video.
-- Sincronización con el reproductor de Advanced Video Player Pro mediante un selector personalizable.
+- Sincronización directa con **Advanced Video Player Pro** y recuperación automática de la duración sincronizada desde Bunny.
+- Detección del contexto de **LearnDash** para asociar cada reproducción con su curso y lección sin configuraciones extra.
 - REST API protegida con _nonce_ para almacenar y consultar el progreso.
-- Contador visual de minutos consumidos directamente bajo el video (`140/180`).
-- Panel "Visualizaciones" en el administrador con filtros por Curso y Usuario.
+- Contador visual renovado que muestra minutos consumidos y minutos restantes justo debajo de cada video.
+- Panel "Visualizaciones" con estética moderna, filtros por curso/usuario, búsqueda global y barra de progreso por fila.
 - Exportación rápida (Reset, Copy, Excel, Print, PDF) gracias a DataTables Buttons.
 
 ## Integración
 
-Para mapear los cursos y lecciones con sus nombres, utiliza los siguientes _hooks_ en tu tema o plugin:
+Cuando LearnDash está activo, el plugin obtiene automáticamente el listado de cursos (`sfwd-courses`) y lecciones (`sfwd-lessons`). Si necesitas sobrescribir nombres o añadir contenidos personalizados puedes seguir utilizando los filtros:
 
 ```php
-add_filter( 'control_minutos_courses', function () {
-    return array(
-        123 => 'Curso de ejemplo',
-    );
+add_filter( 'control_minutos_courses', function ( $courses ) {
+    $courses[123] = 'Curso de ejemplo';
+    return $courses;
 } );
 
-add_filter( 'control_minutos_lessons', function () {
-    return array(
-        456 => 'Lección 1',
-    );
+add_filter( 'control_minutos_lessons', function ( $lessons ) {
+    $lessons[456] = 'Lección 1';
+    return $lessons;
 } );
 ```
 
-Asegúrate de que los elementos `<video>` generados por Advanced Video Player Pro incluyan los atributos `data-video-id`, `data-course-id` y `data-lesson-id` para que el seguimiento identifique correctamente cada reproducción.
+El script frontal busca automáticamente los `<video>` que renderiza `miceaia-Advance-video-pro` (`.avppro-player`, `.miceaia-video-player` o `[data-avppro-player]`). Procura que cada reproductor exponga el identificador del video mediante `data-video-id`; si el plugin de sincronización tiene registrada la duración, el contador mostrará los minutos restantes desde el primer segundo de reproducción.
 
 ## Instalación
 
