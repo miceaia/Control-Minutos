@@ -1,0 +1,34 @@
+.control-minutos-wrap {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.control-minutos-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.control-minutos-filters label {
+    font-weight: 600;
+}
+
+.control-minutos-filters select,
+.control-minutos-filters input {
+    min-width: 220px;
+}
+
+.control-minutos-table-wrapper {
+    margin-top: 20px;
+}
+
+.control-minutos-actions {
+    margin-bottom: 15px;
+}
+
+.control-minutos-actions .button {
+    margin-right: 10px;
+}
