@@ -1,7 +1,9 @@
 .control-minutos-counter {
+    --control-minutos-brand-rgb: 46, 91, 255;
+    --control-minutos-brand-alt-rgb: 90, 200, 250;
     margin-top: 8px;
     padding: 8px 14px;
-    background: linear-gradient(135deg, rgba(46, 91, 255, 0.85), rgba(90, 200, 250, 0.85));
+    background: linear-gradient(135deg, rgba(var(--control-minutos-brand-rgb), 0.85), rgba(var(--control-minutos-brand-alt-rgb), 0.85));
     color: #fff;
     font-size: 14px;
     display: inline-flex;

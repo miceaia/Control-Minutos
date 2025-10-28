@@ -2,6 +2,40 @@
     const settings = window.controlMinutosAdmin || {};
     const strings = settings.strings || {};
     const minutesLabel = strings.minutesShort || 'min';
+    const closeLabel = strings.close || 'Cerrar';
+    let detailDialog;
+
+    const ensureDetailDialog = () => {
+        if (detailDialog) {
+            return detailDialog;
+        }
+
+        if (typeof HTMLDialogElement === 'undefined') {
+            return null;
+        }
+
+        detailDialog = document.createElement('dialog');
+        detailDialog.className = 'control-minutos-dialog';
+        detailDialog.innerHTML = `
+            <form method="dialog" class="control-minutos-dialog__form">
+                <div class="control-minutos-dialog__header">
+                    <h2 class="control-minutos-dialog__title"></h2>
+                </div>
+                <div class="control-minutos-dialog__body"></div>
+                <div class="control-minutos-dialog__footer">
+                    <button type="submit" class="button button-primary">${closeLabel}</button>
+                </div>
+            </form>
+        `;
+
+        detailDialog.addEventListener('cancel', () => {
+            detailDialog.close();
+        });
+
+        document.body.appendChild(detailDialog);
+
+        return detailDialog;
+    };
 
     const formatMinutes = (seconds) => {
         const minutes = (Number(seconds) || 0) / 60;
@@ -46,6 +80,7 @@
                             data-total="${totalMinutes}"
                             data-remaining="${remainingMinutes}"
                             data-updated="${log.last_viewed || ''}"
+                            data-video="${log.video_id || ''}"
                         >${strings.detailsButton || 'Detalles'}</button>
                     </td>
                 </tr>
@@ -105,6 +140,39 @@
                 `${strings.remaining || 'Restan'}: ${button.data('remaining')} ${minutesLabel}`,
                 button.data('updated') ? `Última visualización: ${button.data('updated')}` : ''
             ].filter(Boolean);
+
+            const dialog = ensureDetailDialog();
+
+            if (dialog) {
+                const title = dialog.querySelector('.control-minutos-dialog__title');
+                const body = dialog.querySelector('.control-minutos-dialog__body');
+
+                if (title) {
+                    title.textContent = strings.detailsTitle || 'Detalle de visualización';
+                }
+
+                if (body) {
+                    const list = document.createElement('ul');
+                    list.className = 'control-minutos-dialog__list';
+
+                    detailLines.forEach((line) => {
+                        const item = document.createElement('li');
+                        item.textContent = line;
+                        list.appendChild(item);
+                    });
+
+                    if (button.data('video')) {
+                        const item = document.createElement('li');
+                        item.textContent = `${strings.video || 'Video ID'}: ${button.data('video')}`;
+                        list.appendChild(item);
+                    }
+
+                    body.replaceChildren(list);
+                }
+
+                dialog.showModal();
+                return;
+            }
 
             window.alert(`${strings.detailsTitle || 'Detalle de visualización'}\n\n${detailLines.join('\n')}`);
         });

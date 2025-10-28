@@ -10,6 +10,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Control_Minutos_Admin {
+
+    /**
+     * Plugin slug for namespacing assets.
+     *
+     * @var string
+     */
+    protected $plugin_name;
+
+    /**
+     * Plugin version for cache busting.
+     *
+     * @var string
+     */
+    protected $version;
+
     /**
      * Integrations helper.
      *
@@ -18,20 +33,25 @@ class Control_Minutos_Admin {
     protected $integrations;
 
     /**
-     * Constructor.
+     * Absolute plugin file path for resolving URLs.
      *
-     * @param Control_Minutos_Integrations $integrations Integrations helper.
+     * @var string
      */
-    public function __construct( Control_Minutos_Integrations $integrations ) {
-        $this->integrations = $integrations;
-    }
+    protected $plugin_file;
 
     /**
-     * Register hooks.
+     * Constructor.
+     *
+     * @param string                         $plugin_name  Plugin slug.
+     * @param string                         $version      Plugin version.
+     * @param Control_Minutos_Integrations   $integrations Integrations helper.
+     * @param string                         $plugin_file  Plugin file path.
      */
-    public function hooks() {
-        add_action( 'admin_menu', array( $this, 'register_menu' ) );
-        add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+    public function __construct( $plugin_name, $version, Control_Minutos_Integrations $integrations, $plugin_file ) {
+        $this->plugin_name   = $plugin_name;
+        $this->version       = $version;
+        $this->integrations  = $integrations;
+        $this->plugin_file   = $plugin_file;
     }
 
     /**
@@ -50,13 +70,19 @@ class Control_Minutos_Admin {
 
     /**
      * Enqueue DataTables and custom styles.
+     *
+     * @param string $hook Current admin hook.
      */
     public function enqueue_assets( $hook ) {
         if ( 'toplevel_page_control-minutos' !== $hook ) {
             return;
         }
 
-        wp_enqueue_style( 'control-minutos-admin', plugins_url( 'assets/css/admin.css', CONTROL_MINUTOS_PLUGIN_FILE ), array(), CONTROL_MINUTOS_VERSION );
+        $plugin_url = plugin_dir_url( $this->plugin_file );
+        $style_handle = $this->plugin_name . '-admin';
+        $script_handle = $this->plugin_name . '-admin';
+
+        wp_enqueue_style( $style_handle, $plugin_url . 'assets/css/admin.css', array(), $this->version );
         wp_enqueue_style( 'datatables', 'https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css', array(), '1.13.6' );
         wp_enqueue_style( 'datatables-buttons', 'https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css', array( 'datatables' ), '2.4.1' );
         wp_enqueue_script( 'datatables', 'https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js', array( 'jquery' ), '1.13.6', true );
@@ -67,20 +93,30 @@ class Control_Minutos_Admin {
         wp_enqueue_script( 'datatables-pdfmake', 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js', array(), '0.2.7', true );
         wp_enqueue_script( 'datatables-vfs', 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js', array( 'datatables-pdfmake' ), '0.2.7', true );
 
-        wp_enqueue_script( 'control-minutos-admin', plugins_url( 'assets/js/admin.js', CONTROL_MINUTOS_PLUGIN_FILE ), array( 'jquery', 'datatables', 'datatables-buttons', 'datatables-buttons-html5', 'datatables-buttons-print' ), CONTROL_MINUTOS_VERSION, true );
+        wp_enqueue_script(
+            $script_handle,
+            $plugin_url . 'assets/js/admin.js',
+            array( 'jquery', 'datatables', 'datatables-buttons', 'datatables-buttons-html5', 'datatables-buttons-print', 'wp-api-fetch' ),
+            $this->version,
+            true
+        );
 
         wp_localize_script(
-            'control-minutos-admin',
+            $script_handle,
             'controlMinutosAdmin',
             array(
-                'nonce'        => wp_create_nonce( 'wp_rest' ),
-                'endpoint'     => rest_url( Control_Minutos_REST::REST_NAMESPACE . '/progress' ),
-                'strings'      => array(
-                    'detailsTitle' => __( 'Detalle de visualización', 'control-minutos' ),
-                    'minutesShort' => __( 'min', 'control-minutos' ),
-                    'remaining'    => __( 'Restan', 'control-minutos' ),
-                    'consumed'     => __( 'Consumido', 'control-minutos' ),
+                'nonce'         => wp_create_nonce( 'wp_rest' ),
+                'endpoint'      => rest_url( Control_Minutos_REST::REST_NAMESPACE . '/progress' ),
+                'restNamespace' => Control_Minutos_REST::REST_NAMESPACE,
+                'restRoot'      => esc_url_raw( rest_url() ),
+                'strings'       => array(
+                    'detailsTitle'  => __( 'Detalle de visualización', 'control-minutos' ),
+                    'minutesShort'  => __( 'min', 'control-minutos' ),
+                    'remaining'     => __( 'Restan', 'control-minutos' ),
+                    'consumed'      => __( 'Consumido', 'control-minutos' ),
                     'detailsButton' => __( 'Detalles', 'control-minutos' ),
+                    'close'         => __( 'Cerrar', 'control-minutos' ),
+                    'video'         => __( 'ID del video', 'control-minutos' ),
                 ),
                 'courseOptions' => $this->integrations->get_learndash_courses(),
                 'lessonOptions' => $this->prepare_lessons_for_localize(),
@@ -98,14 +134,14 @@ class Control_Minutos_Admin {
 
         $users = get_users( array( 'fields' => array( 'ID', 'display_name' ) ) );
 
-        $courses = $this->integrations->get_learndash_courses();
+        $courses        = $this->integrations->get_learndash_courses();
         $manual_courses = apply_filters( 'control_minutos_courses', array() );
 
         if ( is_array( $manual_courses ) && ! empty( $manual_courses ) ) {
             $courses = $manual_courses + $courses;
         }
 
-        $lessons_map   = $this->integrations->get_learndash_lessons();
+        $lessons_map    = $this->integrations->get_learndash_lessons();
         $manual_lessons = apply_filters( 'control_minutos_lessons', array() );
 
         if ( is_array( $manual_lessons ) && ! empty( $manual_lessons ) ) {

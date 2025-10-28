@@ -1,6 +1,33 @@
 (function ($) {
     const settings = window.controlMinutosFrontend || {};
     const selector = settings.selector || 'video';
+    const apiFetch = window.wp && window.wp.apiFetch ? window.wp.apiFetch : null;
+    const restNamespace = settings.restNamespace || '';
+    const restPath = restNamespace ? `/${restNamespace.replace(/^\/+|\/+$/g, '')}/progress` : '';
+    const restRoot = settings.restRoot || (window.wpApiSettings && window.wpApiSettings.root) || '';
+    let apiFetchConfigured = false;
+
+    const ensureApiFetch = () => {
+        if (!apiFetch || !restPath) {
+            return false;
+        }
+
+        if (apiFetchConfigured) {
+            return true;
+        }
+
+        if (settings.nonce && typeof apiFetch.createNonceMiddleware === 'function') {
+            apiFetch.use(apiFetch.createNonceMiddleware(settings.nonce));
+        }
+
+        if (restRoot && typeof apiFetch.createRootURLMiddleware === 'function') {
+            apiFetch.use(apiFetch.createRootURLMiddleware(restRoot));
+        }
+
+        apiFetchConfigured = true;
+
+        return true;
+    };
     const debounce = (fn, delay) => {
         let timeout;
         return (...args) => {
@@ -39,10 +66,6 @@
     }
 
     function sendProgress(videoElement, watchedSeconds, totalSeconds) {
-        if (!settings.endpoint) {
-            return;
-        }
-
         const safeWatched = Number.isFinite(watchedSeconds) ? watchedSeconds : 0;
         const safeTotal = Number.isFinite(totalSeconds) ? totalSeconds : 0;
 
@@ -60,6 +83,22 @@
         };
 
         if (!payload.video_id) {
+            return;
+        }
+
+        if (ensureApiFetch()) {
+            apiFetch({
+                path: restPath,
+                method: 'POST',
+                data: payload,
+            }).catch(() => {
+                // Silently ignore errors.
+            });
+
+            return;
+        }
+
+        if (!settings.endpoint || !window.fetch) {
             return;
         }
 
@@ -108,14 +147,16 @@
             sendProgress(video, total, total);
         });
 
-        if (settings.endpoint) {
-            fetch(`${settings.endpoint}?video_id=${encodeURIComponent(video.dataset.videoId || video.id || video.currentSrc)}`, {
-                credentials: 'same-origin',
-                headers: {
-                    'X-WP-Nonce': settings.nonce || ''
-                }
+        const videoId = video.dataset.videoId || video.id || video.currentSrc;
+
+        if (!videoId) {
+            return;
+        }
+
+        if (ensureApiFetch()) {
+            apiFetch({
+                path: `${restPath}?video_id=${encodeURIComponent(videoId)}`,
             })
-                .then((response) => response.json())
                 .then((data) => {
                     if (!data) {
                         return;
@@ -133,6 +174,38 @@
                 .catch(() => {
                     // Silently ignore errors.
                 });
+
+            return;
+        }
+
+        if (!settings.endpoint || !window.fetch) {
+            return;
+        }
+
+        fetch(`${settings.endpoint}?video_id=${encodeURIComponent(videoId)}`, {
+            credentials: 'same-origin',
+            headers: {
+                'X-WP-Nonce': settings.nonce || ''
+            }
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                if (!data) {
+                    return;
+                }
+                const watchedSeconds = parseInt(data.seconds_watched, 10) || 0;
+                const total = parseInt(data.total_seconds, 10) || totalSeconds;
+                const remaining = typeof data.remaining_seconds !== 'undefined' ? parseInt(data.remaining_seconds, 10) : Math.max(total - watchedSeconds, 0);
+                $counter.data('total', total);
+                updateCounter($counter, watchedSeconds);
+                $counter.data('remaining', remaining);
+                if (watchedSeconds) {
+                    video.currentTime = watchedSeconds;
+                }
+            })
+            .catch(() => {
+                // Silently ignore errors.
+            });
         }
     }
 

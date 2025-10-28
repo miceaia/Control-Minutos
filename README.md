@@ -37,10 +37,18 @@ El script frontal busca automáticamente los `<video>` que renderiza `miceaia-Ad
 3. Abre una lección con video para verificar que aparezca el contador de minutos consumidos.
 4. Visita el panel **Visualizaciones** para consultar o exportar los registros.
 
+## Compatibilidad con WordPress 6.7.4
+
+La versión 1.3.0 reestructura todo el cargador PHP del plugin siguiendo el patrón del WordPress Plugin Boilerplate para
+asegurar compatibilidad con la carga diferida de hooks en WordPress 6.7.4. Además, mantiene la capa oficial `wp.apiFetch`
+para realizar las solicitudes REST utilizando los _nonces_ y la raíz de la API configurada por el núcleo. Esto elimina
+advertencias de seguridad adicionales de la versión 6.7.4 y garantiza que el contador frontal y el panel "Visualizaciones"
+funcionen incluso cuando el sitio requiera cabeceras estrictas o autenticación reforzada.
+
 ## Desarrollo
 
 - PHP 7.4 o superior.
-- WordPress 5.8 o superior.
+- WordPress 5.8 o superior (probado hasta 6.7.4).
 - DataTables 1.13 para la interfaz de reportes.
 
 Las contribuciones son bienvenidas mediante _pull requests_.
