@@ -29,13 +29,6 @@ class Control_Minutos_REST {
     }
 
     /**
-     * Register hooks.
-     */
-    public function hooks() {
-        add_action( 'rest_api_init', array( $this, 'register_routes' ) );
-    }
-
-    /**
      * Register REST routes.
      */
     public function register_routes() {
@@ -83,8 +76,8 @@ class Control_Minutos_REST {
      * @return WP_REST_Response
      */
     public function log_progress( WP_REST_Request $request ) {
-        $user_id        = get_current_user_id();
-        $video_id       = sanitize_text_field( $request->get_param( 'video_id' ) );
+        $user_id         = get_current_user_id();
+        $video_id        = sanitize_text_field( $request->get_param( 'video_id' ) );
         $seconds_watched = absint( $request->get_param( 'seconds_watched' ) );
         $total_seconds   = absint( $request->get_param( 'total_seconds' ) );
         $course_id       = absint( $request->get_param( 'course_id' ) );

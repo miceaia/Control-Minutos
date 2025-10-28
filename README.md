@@ -39,10 +39,11 @@ El script frontal busca automáticamente los `<video>` que renderiza `miceaia-Ad
 
 ## Compatibilidad con WordPress 6.7.4
 
-La versión 1.2.0 aprovecha la capa oficial `wp.apiFetch` disponible en WordPress 6.7 para realizar las solicitudes REST
-utilizando los _nonces_ y la raíz de la API configurada por el núcleo. Esto elimina advertencias de seguridad adicionales de
-la versión 6.7.4 y garantiza que el contador frontal y el panel "Visualizaciones" funcionen incluso cuando el sitio requiera
-cabeceras estrictas o autenticación reforzada.
+La versión 1.3.0 reestructura todo el cargador PHP del plugin siguiendo el patrón del WordPress Plugin Boilerplate para
+asegurar compatibilidad con la carga diferida de hooks en WordPress 6.7.4. Además, mantiene la capa oficial `wp.apiFetch`
+para realizar las solicitudes REST utilizando los _nonces_ y la raíz de la API configurada por el núcleo. Esto elimina
+advertencias de seguridad adicionales de la versión 6.7.4 y garantiza que el contador frontal y el panel "Visualizaciones"
+funcionen incluso cuando el sitio requiera cabeceras estrictas o autenticación reforzada.
 
 ## Desarrollo
 

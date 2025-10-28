@@ -1,6 +1,6 @@
 <?php
 /**
- * Main plugin loader.
+ * Main plugin bootstrap.
  *
  * @package Control_Minutos
  */
@@ -9,36 +9,55 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once CONTROL_MINUTOS_PLUGIN_DIR . 'includes/class-control-minutos-activator.php';
+require_once CONTROL_MINUTOS_PLUGIN_DIR . 'includes/class-control-minutos-loader.php';
+require_once CONTROL_MINUTOS_PLUGIN_DIR . 'includes/class-control-minutos-i18n.php';
 require_once CONTROL_MINUTOS_PLUGIN_DIR . 'includes/class-control-minutos-integrations.php';
 require_once CONTROL_MINUTOS_PLUGIN_DIR . 'includes/class-control-minutos-rest.php';
 require_once CONTROL_MINUTOS_PLUGIN_DIR . 'includes/class-control-minutos-admin.php';
 require_once CONTROL_MINUTOS_PLUGIN_DIR . 'includes/class-control-minutos-frontend.php';
 
+/**
+ * Coordinates plugin dependencies and hooks.
+ */
 class Control_Minutos {
-    /**
-     * Singleton instance.
-     *
-     * @var Control_Minutos
-     */
-    protected static $instance = null;
 
     /**
-     * REST controller instance.
+     * Unique plugin identifier.
      *
-     * @var Control_Minutos_REST
+     * @var string
      */
-    protected $rest_controller;
+    protected $plugin_name = 'control-minutos';
 
     /**
-     * Integrations helper instance.
+     * Plugin version.
+     *
+     * @var string
+     */
+    protected $version;
+
+    /**
+     * Loader that orchestrates hooks.
+     *
+     * @var Control_Minutos_Loader
+     */
+    protected $loader;
+
+    /**
+     * Integrations helper.
      *
      * @var Control_Minutos_Integrations
      */
     protected $integrations;
 
     /**
-     * Admin UI instance.
+     * REST controller.
+     *
+     * @var Control_Minutos_REST
+     */
+    protected $rest_controller;
+
+    /**
+     * Admin UI handler.
      *
      * @var Control_Minutos_Admin
      */
@@ -52,47 +71,98 @@ class Control_Minutos {
     protected $frontend;
 
     /**
-     * Get singleton instance.
+     * Plugin file path.
      *
-     * @return Control_Minutos
+     * @var string
      */
-    public static function instance() {
-        if ( null === self::$instance ) {
-            self::$instance = new self();
-        }
+    protected $plugin_file;
 
-        return self::$instance;
+    /**
+     * Instantiate the plugin and register hooks.
+     */
+    public function __construct() {
+        $this->version     = CONTROL_MINUTOS_VERSION;
+        $this->plugin_file = CONTROL_MINUTOS_PLUGIN_FILE;
+
+        $this->load_dependencies();
+        $this->set_locale();
+        $this->define_admin_hooks();
+        $this->define_public_hooks();
+        $this->define_rest_hooks();
     }
 
     /**
-     * Control_Minutos constructor.
+     * Load class dependencies.
      */
-    private function __construct() {
-        register_activation_hook( CONTROL_MINUTOS_PLUGIN_FILE, array( 'Control_Minutos_Activator', 'activate' ) );
-        register_deactivation_hook( CONTROL_MINUTOS_PLUGIN_FILE, array( 'Control_Minutos_Activator', 'deactivate' ) );
-
-        add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
-        add_action( 'init', array( $this, 'init' ) );
-    }
-
-    /**
-     * Load plugin textdomain.
-     */
-    public function load_textdomain() {
-        load_plugin_textdomain( 'control-minutos', false, dirname( plugin_basename( CONTROL_MINUTOS_PLUGIN_FILE ) ) . '/languages' );
-    }
-
-    /**
-     * Init plugin components.
-     */
-    public function init() {
-        $this->integrations    = new Control_Minutos_Integrations();
+    protected function load_dependencies() {
+        $this->loader        = new Control_Minutos_Loader();
+        $this->integrations  = new Control_Minutos_Integrations();
         $this->rest_controller = new Control_Minutos_REST( $this->integrations );
-        $this->admin           = new Control_Minutos_Admin( $this->integrations );
-        $this->frontend        = new Control_Minutos_Frontend( $this->rest_controller, $this->integrations );
+        $this->admin         = new Control_Minutos_Admin( $this->plugin_name, $this->version, $this->integrations, $this->plugin_file );
+        $this->frontend      = new Control_Minutos_Frontend( $this->plugin_name, $this->version, $this->rest_controller, $this->integrations, $this->plugin_file );
+    }
 
-        $this->rest_controller->hooks();
-        $this->admin->hooks();
-        $this->frontend->hooks();
+    /**
+     * Setup plugin localization.
+     */
+    protected function set_locale() {
+        $plugin_i18n = new Control_Minutos_i18n();
+        $this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
+    }
+
+    /**
+     * Register admin-specific hooks.
+     */
+    protected function define_admin_hooks() {
+        $this->loader->add_action( 'admin_menu', $this->admin, 'register_menu' );
+        $this->loader->add_action( 'admin_enqueue_scripts', $this->admin, 'enqueue_assets' );
+    }
+
+    /**
+     * Register public hooks.
+     */
+    protected function define_public_hooks() {
+        $this->loader->add_action( 'wp_enqueue_scripts', $this->frontend, 'enqueue_assets' );
+    }
+
+    /**
+     * Register REST hooks.
+     */
+    protected function define_rest_hooks() {
+        $this->loader->add_action( 'rest_api_init', $this->rest_controller, 'register_routes' );
+    }
+
+    /**
+     * Run the plugin loader.
+     */
+    public function run() {
+        $this->loader->run();
+    }
+
+    /**
+     * Retrieve the loader instance.
+     *
+     * @return Control_Minutos_Loader
+     */
+    public function get_loader() {
+        return $this->loader;
+    }
+
+    /**
+     * Retrieve the plugin name.
+     *
+     * @return string
+     */
+    public function get_plugin_name() {
+        return $this->plugin_name;
+    }
+
+    /**
+     * Retrieve the plugin version.
+     *
+     * @return string
+     */
+    public function get_version() {
+        return $this->version;
     }
 }
