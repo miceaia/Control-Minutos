@@ -1,0 +1,212 @@
+:root {
+    --control-minutos-theme-rgb: 46, 91, 255;
+    --control-minutos-theme: var(--wp-admin-theme-color, rgb(var(--control-minutos-theme-rgb)));
+    --control-minutos-theme-contrast: var(--wp-admin-theme-color-darker-20, #12234b);
+    --control-minutos-text-muted: var(--wp-admin-theme-color-darker-40, #6070a1);
+    --control-minutos-surface: var(--wp-admin-theme-color-bg, #ffffff);
+    --control-minutos-border: rgba(var(--control-minutos-theme-rgb), 0.12);
+}
+
+.control-minutos-wrap {
+    --control-minutos-theme-soft: rgba(var(--control-minutos-theme-rgb), 0.12);
+    background-color: var(--control-minutos-surface);
+    background-image: linear-gradient(135deg, rgba(var(--control-minutos-theme-rgb), 0.08) 0%, var(--control-minutos-surface) 55%);
+    padding: 32px;
+    border-radius: 18px;
+    box-shadow: 0 12px 32px rgba(15, 37, 118, 0.08);
+}
+
+.control-minutos-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.control-minutos-header h1 {
+    margin: 0;
+    font-size: 28px;
+    color: var(--control-minutos-theme-contrast);
+}
+
+.control-minutos-header .subtitle {
+    margin: 6px 0 0;
+    color: var(--control-minutos-text-muted);
+    font-size: 15px;
+}
+
+.control-minutos-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.summary-card {
+    background: var(--control-minutos-surface);
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(16, 44, 112, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border: 1px solid var(--control-minutos-border);
+}
+
+.summary-card .label {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--control-minutos-text-muted);
+}
+
+.summary-card .value {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--control-minutos-theme);
+}
+
+.control-minutos-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 220px;
+}
+
+.filter-group label {
+    font-weight: 600;
+    color: var(--control-minutos-theme-contrast);
+}
+
+.control-select,
+.control-minutos-filters input[type="search"] {
+    border-radius: 10px;
+    border: 1px solid rgba(var(--control-minutos-theme-rgb), 0.18);
+    padding: 10px 12px;
+    box-shadow: inset 0 1px 3px rgba(17, 26, 52, 0.08);
+}
+
+.control-minutos-actions {
+    margin-bottom: 14px;
+    color: var(--control-minutos-text-muted);
+}
+
+.control-minutos-table-wrapper {
+    background: var(--control-minutos-surface);
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 8px 24px rgba(31, 55, 113, 0.1);
+}
+
+#control-minutos-table thead th {
+    background: rgba(var(--control-minutos-theme-rgb), 0.08);
+    color: var(--control-minutos-theme-contrast);
+    border-bottom: 0;
+    font-weight: 600;
+}
+
+#control-minutos-table tbody td {
+    vertical-align: middle;
+}
+
+.progress {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.progress-value {
+    font-weight: 600;
+    color: var(--control-minutos-theme-contrast);
+}
+
+.progress-bar {
+    height: 8px;
+    background: rgba(var(--control-minutos-theme-rgb), 0.15);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--control-minutos-theme) 0%, rgba(var(--control-minutos-theme-rgb), 0.65) 100%);
+    border-radius: 999px;
+}
+
+.control-minutos-table-wrapper .button-primary.view-details {
+    background: linear-gradient(135deg, var(--control-minutos-theme), rgba(var(--control-minutos-theme-rgb), 0.75));
+    border: none;
+    box-shadow: 0 6px 16px rgba(var(--control-minutos-theme-rgb), 0.35);
+}
+
+.control-minutos-table-wrapper .button-primary.view-details:hover {
+    transform: translateY(-1px);
+}
+
+.control-minutos-dialog {
+    border: none;
+    border-radius: 16px;
+    padding: 0;
+    max-width: 520px;
+    width: min(520px, 90vw);
+    background: var(--control-minutos-surface);
+    color: var(--control-minutos-theme-contrast);
+    box-shadow: 0 32px 48px rgba(18, 35, 75, 0.24);
+}
+
+.control-minutos-dialog::backdrop {
+    background: rgba(10, 18, 40, 0.55);
+}
+
+.control-minutos-dialog__form {
+    display: flex;
+    flex-direction: column;
+}
+
+.control-minutos-dialog__header {
+    padding: 20px 24px 0;
+}
+
+.control-minutos-dialog__title {
+    margin: 0;
+    font-size: 20px;
+    color: var(--control-minutos-theme-contrast);
+}
+
+.control-minutos-dialog__body {
+    padding: 12px 24px 0;
+}
+
+.control-minutos-dialog__list {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--control-minutos-theme-contrast);
+}
+
+.control-minutos-dialog__list li {
+    margin-bottom: 6px;
+}
+
+.control-minutos-dialog__footer {
+    padding: 16px 24px 24px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+@media (max-width: 782px) {
+    .control-minutos-wrap {
+        padding: 20px;
+    }
+
+    .control-minutos-table-wrapper {
+        padding: 12px;
+    }
+}

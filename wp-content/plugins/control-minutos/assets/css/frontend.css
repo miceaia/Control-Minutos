@@ -1,0 +1,26 @@
+.control-minutos-counter {
+    --control-minutos-brand-rgb: 46, 91, 255;
+    --control-minutos-brand-alt-rgb: 90, 200, 250;
+    margin-top: 8px;
+    padding: 8px 14px;
+    background: linear-gradient(135deg, rgba(var(--control-minutos-brand-rgb), 0.85), rgba(var(--control-minutos-brand-alt-rgb), 0.85));
+    color: #fff;
+    font-size: 14px;
+    display: inline-flex;
+    gap: 12px;
+    border-radius: 999px;
+    align-items: center;
+    box-shadow: 0 6px 16px rgba(34, 57, 152, 0.3);
+}
+
+.control-minutos-counter span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cm-counter-remaining::before {
+    content: '•';
+    font-size: 12px;
+    opacity: 0.7;
+}
